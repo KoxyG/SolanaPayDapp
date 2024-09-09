@@ -14,16 +14,13 @@ interface Product {
   imageUrl?: string;
 }
 
+type QRCodeStylingType = new (options: any) => {
+  append: (element: HTMLElement) => void;
+};
+
 const staticProducts: Product[] = [
-  { name: "White T-Shirt", price: 0.2, quantity: 50, imageUrl: "/t-shirt.jpeg" },
-  { name: "Cap", price: 0.3, quantity: 30, imageUrl: "/cap.jpeg" },
-  { name: "Hoodie", price: 0.5, quantity: 15, imageUrl: "/hoodie.jpeg" },
-  {
-    name: "Black T-Shirt",
-    price: 0.7,
-    quantity: 10,
-    imageUrl: "/t-shirt-black.jpeg",
-  },
+  { name: "LS Serum", price: 0.2, quantity: 2, imageUrl: "./images/img1.jpg" },
+  { name: "SkinCare", price: 0.3, quantity: 2, imageUrl: "/images/img2.jpg" },
 ];
 
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
@@ -34,6 +31,8 @@ export default function Buy() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [transactionSignature, setTransactionSignature] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [QRCodeStylingComponent, setQRCodeStylingComponent] =
+    useState<QRCodeStylingType | null>(null);
 
   useEffect(() => {
     // Get the products from local storage
@@ -42,42 +41,18 @@ export default function Buy() {
     setProducts([...staticProducts, ...storedProducts]);
   }, []);
 
-  // Function to handle selecting a new product
+  useEffect(() => {
+    import("qr-code-styling").then((module) => {
+      setQRCodeStylingComponent(() => module.default as QRCodeStylingType);
+    });
+  }, []); // Added closing bracket here for the useEffect
+
   const handleProductSelection = (product: Product) => {
     setSelectedProduct(product);
     // Reset payment states when a new product is selected
     setPaymentConfirmed(false);
     setTransactionSignature(null);
     setLoading(false);
-  };
-
-  const handlePayment = async (product: Product) => {
-    setLoading(true);
-    const recipient = new PublicKey("54Xh2zCzKxLUtXmNrUJwMx54c4KDdqiQcWrye4NHYPkK");
-    const amount = new BigNumber(product.price);
-    const reference = new Keypair().publicKey;
-    const label = product.name;
-    const message = `${product.name} purchase`;
-
-    const transactionDetails: TransferRequestURLFields = {
-      recipient,
-      amount,
-      reference,
-      label,
-      message,
-    };
-
-    const url = encodeURL(transactionDetails);
-    const qr = createQR(url.toString(), 400, "transparent");
-
-    const qrCodeContainer = document.getElementById("qr-code-container");
-    if (qrCodeContainer) {
-      qrCodeContainer.innerHTML = "";
-      qr.append(qrCodeContainer);
-    }
-
-    // Poll for payment confirmation using the reference
-    await verifyPayment(recipient, amount, reference);
   };
 
   const verifyPayment = async (recipient: PublicKey, amount: BigNumber, reference: PublicKey) => {
@@ -116,6 +91,59 @@ export default function Buy() {
     }
   };
 
+  const handlePayment = async (product: Product) => {
+    setLoading(true);
+    const recipient = new PublicKey("54Xh2zCzKxLUtXmNrUJwMx54c4KDdqiQcWrye4NHYPkK");
+    const amount = new BigNumber(product.price);
+    const reference = new Keypair().publicKey;
+    const label = product.name;
+    const message = `${product.name} purchase`;
+
+    const transactionDetails: TransferRequestURLFields = {
+      recipient,
+      amount,
+      reference,
+      label,
+      message,
+    };
+
+    const url = encodeURL(transactionDetails);
+
+    if (QRCodeStylingComponent) {
+      const qrCode = new QRCodeStylingComponent({
+        width: 300,
+        height: 300,
+        type: "svg",
+        data: url.href,
+        dotsOptions: {
+          color: "#000000",
+          type: "extra-rounded",
+        },
+        image: "/images/sol.png",
+        backgroundOptions: {
+          color: "#ffffff",
+        },
+        imageOptions: {
+          hideBackgroundDots: true,
+          crossOrigin: "anonymous",
+          margin: 20,
+        },
+      });
+
+    //   const qr = createQR(url.toString(), 400, "transparent");
+
+      const qrCodeContainer = document.getElementById("qr-code-container");
+      if (qrCodeContainer) {
+        qrCodeContainer.innerHTML = "";
+        qrCode.append(qrCodeContainer);
+      }
+
+      // Poll for payment confirmation using the reference
+      await verifyPayment(recipient, amount, reference);
+    }
+  };
+
+
   return (
     <div className="w-full mt-3 mx-auto">
           <Link href="/">
@@ -126,7 +154,7 @@ export default function Buy() {
         {products.map((product, index) => (
           <li
             key={index}
-            className="w-[32%] m-20 flex flex-col items-start bg-[#251206] p-4 shadow-md rounded-lg"
+            className="w-[32%] m-10 sm:m-20 flex flex-col items-start bg-[#251206] p-4 shadow-md rounded-lg"
           >
             <img
               src={product.imageUrl}
@@ -135,7 +163,7 @@ export default function Buy() {
             />
             <h3 className="text-xl font-medium">{product.name}</h3>
             <div className="center gap-2">
-              <img src="/solanaLogoMark.png" height={15} width={15} alt="sol" />
+              <img src="/images/sol.png" height={15} width={15} alt="sol" />
               <p className="text-lg">{product.price} SOL</p>
             </div>
             <p className="text-sm text-gray-500">
@@ -145,8 +173,8 @@ export default function Buy() {
               onClick={() => handleProductSelection(product)}
               className="mt-4 bg-gradient-to-r from-[#9945FF] to-[#14F195] text-white px-10 py-3 rounded-lg center gap-2"
             >
-              <FaOpencart />
-              <p>View & Pay</p>
+              
+              <p>Pay Now</p>
             </button>
           </li>
         ))}
@@ -154,28 +182,29 @@ export default function Buy() {
 
       {selectedProduct && (
         <div className="fixed bottom-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white fixed bottom-0 w-screen h-[90%] rounded-lg shadow-lg p-8 overflow-auto">
+          <div className="bg-[#251206]  fixed bottom-0 w-screen h-[90%] rounded-lg shadow-lg p-8 overflow-auto">
             <button
-              className="absolute top-4 right-4 text-black text-4xl"
+              className="absolute top-4 right-4 text-white text-4xl"
               onClick={() => setSelectedProduct(null)}
             >
               &times;
             </button>
-            <div className="center mt-10 gap-20">
+            <div className="center sm:flex mt-10 gap-20">
               <div className="w-1/2 h-full">
                 <img
                   src={selectedProduct.imageUrl}
                   alt={selectedProduct.name}
-                  className="w-[800px] h-[700px] object-cover"
+                  className="sm:w-[800px] sm:h-[700px] object-cover"
                 />
               </div>
-              <div className="w-1/2">
+
+              <div className="w-1/2 sm:pt-[100px]">
                 <h2 className="text-3xl font-bold mb-4">
                   {selectedProduct.name}
                 </h2>
                 <div className="flex items-center gap-2">
                   <img
-                    src="/solanaLogoMark.png"
+                    src="/images/sol.png"
                     alt="sol"
                     className="size-[20px]"
                   />
@@ -184,7 +213,7 @@ export default function Buy() {
                 <p className="text-lg text-gray-600 mb-4">
                   Quantity: {selectedProduct.quantity}
                 </p>
-                <div id="qr-code-container" className="my-4"></div>
+                <div id="qr-code-container" className="my-4 text-white"></div>
 
                 {/* Button to Generate QR Code */}
                 <button
@@ -233,5 +262,6 @@ export default function Buy() {
         </div>
       )}
     </div>
+
   );
 }
