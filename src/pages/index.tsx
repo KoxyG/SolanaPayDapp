@@ -32,9 +32,11 @@ export default function Home() {
           </button>
           </Link>
 
+          <Link href="buy">
           <button className="!bg-gradient-to-r from-[#35d6ab] to-[#cd32fc] px-5 py-3 rounded-md">
             Buy a product
           </button>
+          </Link>
 
           </div> 
         </div>
