@@ -1,5 +1,6 @@
 import Image from "next/image";
 import localFont from "next/font/local";
+import Link from "next/link";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,9 +26,11 @@ export default function Home() {
           </h1>  
           <div className="p-10 space-x-8">
 
-          <button className="!bg-gradient-to-r from-[#35d6ab] to-[#cd32fc] px-5 py-3 rounded-md">
+          <Link href="list">
+          <button  className="!bg-gradient-to-r from-[#35d6ab] to-[#cd32fc] px-5 py-3 rounded-md">
             List Now
           </button>
+          </Link>
 
           <button className="!bg-gradient-to-r from-[#35d6ab] to-[#cd32fc] px-5 py-3 rounded-md">
             Buy a product
