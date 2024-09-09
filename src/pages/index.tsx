@@ -21,7 +21,7 @@ export default function Home() {
       <div className="sm:flex h-full w-full">
 
         <div className="grid">
-          <h1 className="sm:w-[700px] p-10 font-bold text-[50px] sm:text-[82px] sm:leading-[5rem] text-[#0b0a09]">
+          <h1 className="sm:w-[700px] p-10 font-bold text-[50px] sm:text-[82px] sm:leading-[5rem] text-[#251206]">
             List on sol and Pay with QR code
           </h1>  
           <div className="p-10 space-x-8">

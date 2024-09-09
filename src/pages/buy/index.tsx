@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { createQR, encodeURL, TransferRequestURLFields, findReference, validateTransfer } from "@solana/pay";
+import {  encodeURL, TransferRequestURLFields, findReference, validateTransfer } from "@solana/pay";
 import { Connection, PublicKey, Keypair } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { FaOpencart } from "react-icons/fa";
